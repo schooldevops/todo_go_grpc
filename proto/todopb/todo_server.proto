@@ -20,12 +20,28 @@ service TodoService {
     };
   }
 
-  rpc TodoByCriteria(TodoCriteria) returns (stream Todo) {
+  rpc TodoByCriteria(TodoCriteria) returns (TodoList) {
     option (google.api.http) = {
-      get: "/v1/todos",
+      post: "/v1/todos/criteria",
+      body: "*",
     };
   }
 
+  rpc TodoByCriteriaGrpc(TodoCriteria) returns (stream Todo) {
+  }
+
+  rpc UpdateTodoById(CreateTodoRequest) returns (Todo) {
+    option (google.api.http) = {
+      put: "/v1/todos",
+      body: "*",
+    };
+  }
+
+  rpc DeleteTodoByCriteria(TodoId) returns (TodoId) {
+    option (google.api.http) = {
+      delete: "/v1/todos/{id}",
+    };
+  }
 }
 
 message Todo {
@@ -43,6 +59,24 @@ message CreateTodoRequest {
 }
 
 message TodoCriteria {
+  string id = 1;
+  string user_id = 2;
+  string subject = 3;
+  string status = 4;
+  string time_range = 5;
+  google.protobuf.Timestamp start_time = 6;
+  google.protobuf.Timestamp end_time = 7;
+}
+
+message TodoList {
+  repeated Todo todo = 1;
+}
+
+message TodoIdList {
+  repeated string id = 1;
+}
+
+message TodoId {
   string id = 1;
 }
 

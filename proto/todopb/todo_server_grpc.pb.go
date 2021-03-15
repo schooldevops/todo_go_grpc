@@ -20,7 +20,10 @@ const _ = grpc.SupportPackageIsVersion7
 type TodoServiceClient interface {
 	CreateTodo(ctx context.Context, in *CreateTodoRequest, opts ...grpc.CallOption) (*Todo, error)
 	TodoById(ctx context.Context, in *TodoCriteria, opts ...grpc.CallOption) (*Todo, error)
-	TodoByCriteria(ctx context.Context, in *TodoCriteria, opts ...grpc.CallOption) (TodoService_TodoByCriteriaClient, error)
+	TodoByCriteria(ctx context.Context, in *TodoCriteria, opts ...grpc.CallOption) (*TodoList, error)
+	TodoByCriteriaGrpc(ctx context.Context, in *TodoCriteria, opts ...grpc.CallOption) (TodoService_TodoByCriteriaGrpcClient, error)
+	UpdateTodoById(ctx context.Context, in *CreateTodoRequest, opts ...grpc.CallOption) (*Todo, error)
+	DeleteTodoByCriteria(ctx context.Context, in *TodoId, opts ...grpc.CallOption) (*TodoId, error)
 }
 
 type todoServiceClient struct {
@@ -49,12 +52,21 @@ func (c *todoServiceClient) TodoById(ctx context.Context, in *TodoCriteria, opts
 	return out, nil
 }
 
-func (c *todoServiceClient) TodoByCriteria(ctx context.Context, in *TodoCriteria, opts ...grpc.CallOption) (TodoService_TodoByCriteriaClient, error) {
-	stream, err := c.cc.NewStream(ctx, &TodoService_ServiceDesc.Streams[0], "/proto.TodoService/TodoByCriteria", opts...)
+func (c *todoServiceClient) TodoByCriteria(ctx context.Context, in *TodoCriteria, opts ...grpc.CallOption) (*TodoList, error) {
+	out := new(TodoList)
+	err := c.cc.Invoke(ctx, "/proto.TodoService/TodoByCriteria", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &todoServiceTodoByCriteriaClient{stream}
+	return out, nil
+}
+
+func (c *todoServiceClient) TodoByCriteriaGrpc(ctx context.Context, in *TodoCriteria, opts ...grpc.CallOption) (TodoService_TodoByCriteriaGrpcClient, error) {
+	stream, err := c.cc.NewStream(ctx, &TodoService_ServiceDesc.Streams[0], "/proto.TodoService/TodoByCriteriaGrpc", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &todoServiceTodoByCriteriaGrpcClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -64,21 +76,39 @@ func (c *todoServiceClient) TodoByCriteria(ctx context.Context, in *TodoCriteria
 	return x, nil
 }
 
-type TodoService_TodoByCriteriaClient interface {
+type TodoService_TodoByCriteriaGrpcClient interface {
 	Recv() (*Todo, error)
 	grpc.ClientStream
 }
 
-type todoServiceTodoByCriteriaClient struct {
+type todoServiceTodoByCriteriaGrpcClient struct {
 	grpc.ClientStream
 }
 
-func (x *todoServiceTodoByCriteriaClient) Recv() (*Todo, error) {
+func (x *todoServiceTodoByCriteriaGrpcClient) Recv() (*Todo, error) {
 	m := new(Todo)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
+}
+
+func (c *todoServiceClient) UpdateTodoById(ctx context.Context, in *CreateTodoRequest, opts ...grpc.CallOption) (*Todo, error) {
+	out := new(Todo)
+	err := c.cc.Invoke(ctx, "/proto.TodoService/UpdateTodoById", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *todoServiceClient) DeleteTodoByCriteria(ctx context.Context, in *TodoId, opts ...grpc.CallOption) (*TodoId, error) {
+	out := new(TodoId)
+	err := c.cc.Invoke(ctx, "/proto.TodoService/DeleteTodoByCriteria", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 // TodoServiceServer is the server API for TodoService service.
@@ -87,7 +117,10 @@ func (x *todoServiceTodoByCriteriaClient) Recv() (*Todo, error) {
 type TodoServiceServer interface {
 	CreateTodo(context.Context, *CreateTodoRequest) (*Todo, error)
 	TodoById(context.Context, *TodoCriteria) (*Todo, error)
-	TodoByCriteria(*TodoCriteria, TodoService_TodoByCriteriaServer) error
+	TodoByCriteria(context.Context, *TodoCriteria) (*TodoList, error)
+	TodoByCriteriaGrpc(*TodoCriteria, TodoService_TodoByCriteriaGrpcServer) error
+	UpdateTodoById(context.Context, *CreateTodoRequest) (*Todo, error)
+	DeleteTodoByCriteria(context.Context, *TodoId) (*TodoId, error)
 	mustEmbedUnimplementedTodoServiceServer()
 }
 
@@ -101,8 +134,17 @@ func (UnimplementedTodoServiceServer) CreateTodo(context.Context, *CreateTodoReq
 func (UnimplementedTodoServiceServer) TodoById(context.Context, *TodoCriteria) (*Todo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TodoById not implemented")
 }
-func (UnimplementedTodoServiceServer) TodoByCriteria(*TodoCriteria, TodoService_TodoByCriteriaServer) error {
-	return status.Errorf(codes.Unimplemented, "method TodoByCriteria not implemented")
+func (UnimplementedTodoServiceServer) TodoByCriteria(context.Context, *TodoCriteria) (*TodoList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TodoByCriteria not implemented")
+}
+func (UnimplementedTodoServiceServer) TodoByCriteriaGrpc(*TodoCriteria, TodoService_TodoByCriteriaGrpcServer) error {
+	return status.Errorf(codes.Unimplemented, "method TodoByCriteriaGrpc not implemented")
+}
+func (UnimplementedTodoServiceServer) UpdateTodoById(context.Context, *CreateTodoRequest) (*Todo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateTodoById not implemented")
+}
+func (UnimplementedTodoServiceServer) DeleteTodoByCriteria(context.Context, *TodoId) (*TodoId, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteTodoByCriteria not implemented")
 }
 func (UnimplementedTodoServiceServer) mustEmbedUnimplementedTodoServiceServer() {}
 
@@ -153,25 +195,79 @@ func _TodoService_TodoById_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TodoService_TodoByCriteria_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _TodoService_TodoByCriteria_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TodoCriteria)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TodoServiceServer).TodoByCriteria(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.TodoService/TodoByCriteria",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TodoServiceServer).TodoByCriteria(ctx, req.(*TodoCriteria))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TodoService_TodoByCriteriaGrpc_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(TodoCriteria)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(TodoServiceServer).TodoByCriteria(m, &todoServiceTodoByCriteriaServer{stream})
+	return srv.(TodoServiceServer).TodoByCriteriaGrpc(m, &todoServiceTodoByCriteriaGrpcServer{stream})
 }
 
-type TodoService_TodoByCriteriaServer interface {
+type TodoService_TodoByCriteriaGrpcServer interface {
 	Send(*Todo) error
 	grpc.ServerStream
 }
 
-type todoServiceTodoByCriteriaServer struct {
+type todoServiceTodoByCriteriaGrpcServer struct {
 	grpc.ServerStream
 }
 
-func (x *todoServiceTodoByCriteriaServer) Send(m *Todo) error {
+func (x *todoServiceTodoByCriteriaGrpcServer) Send(m *Todo) error {
 	return x.ServerStream.SendMsg(m)
+}
+
+func _TodoService_UpdateTodoById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateTodoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TodoServiceServer).UpdateTodoById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.TodoService/UpdateTodoById",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TodoServiceServer).UpdateTodoById(ctx, req.(*CreateTodoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TodoService_DeleteTodoByCriteria_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TodoId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TodoServiceServer).DeleteTodoByCriteria(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.TodoService/DeleteTodoByCriteria",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TodoServiceServer).DeleteTodoByCriteria(ctx, req.(*TodoId))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 // TodoService_ServiceDesc is the grpc.ServiceDesc for TodoService service.
@@ -189,11 +285,23 @@ var TodoService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "TodoById",
 			Handler:    _TodoService_TodoById_Handler,
 		},
+		{
+			MethodName: "TodoByCriteria",
+			Handler:    _TodoService_TodoByCriteria_Handler,
+		},
+		{
+			MethodName: "UpdateTodoById",
+			Handler:    _TodoService_UpdateTodoById_Handler,
+		},
+		{
+			MethodName: "DeleteTodoByCriteria",
+			Handler:    _TodoService_DeleteTodoByCriteria_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "TodoByCriteria",
-			Handler:       _TodoService_TodoByCriteria_Handler,
+			StreamName:    "TodoByCriteriaGrpc",
+			Handler:       _TodoService_TodoByCriteriaGrpc_Handler,
 			ServerStreams: true,
 		},
 	},

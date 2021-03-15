@@ -3,8 +3,40 @@ POST http://localhost:9000/v1/todos
 
 {
   "todo": {
-    "user_id": "DooKi",
+    "user_id": "DooKi2222",
     "subject": "Make a program",
     "status": "DOING"
   }
 }
+
+### findTodoById
+GET http://localhost:9000/v1/todos/604f29d4c038437cb7744515
+
+###  findTodoByCriteria
+POST http://localhost:9000/v1/todos/criteria
+
+{
+    "user_id": "DooKi2222",
+    "status": "DOING",
+    "time_range": "created_at",
+    "start_time": "2021-03-15T00:00:00.000Z",
+    "end_time": "2021-03-15T17:00:00.000Z"
+}
+
+### update Todo 
+
+PUT http://localhost:9000/v1/todos
+
+{
+  "todo": {
+    "id": "604f29d4c038437cb7744515",
+    "user_id": "3333",
+    "subject": "Make a Cake11",
+    "status": "REVIEW"
+  }
+}
+
+### delete Todo
+
+DELETE http://localhost:9000/v1/todos/604f29d4c038437cb7744515
+

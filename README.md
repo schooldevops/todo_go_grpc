@@ -14,3 +14,9 @@ go get "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
 go get "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
 go get "google.golang.org/protobuf/cmd/protoc-gen-go"
 ```
+
+## Install bson 
+
+```go
+go get "gopkg.in/mgo.v2/bson"
+```
