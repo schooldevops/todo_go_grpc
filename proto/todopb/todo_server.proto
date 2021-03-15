@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package proto;
+option go_package = "todopb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+service TodoService {
+  rpc CreateTodo(CreateTodoRequest) returns (Todo) {
+    option (google.api.http) = {
+      post: "/v1/todos",
+      body: "*",
+    };
+  }
+
+  rpc TodoById(TodoCriteria) returns (Todo) {
+    option (google.api.http) = {
+      get: "/v1/todos/{id}",
+    };
+  }
+
+  rpc TodoByCriteria(TodoCriteria) returns (stream Todo) {
+    option (google.api.http) = {
+      get: "/v1/todos",
+    };
+  }
+
+}
+
+message Todo {
+  string id = 1;
+  string user_id = 2;
+  string subject = 3;
+  string status = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp modified_at = 6;
+  google.protobuf.Timestamp done_at = 7; 
+}
+
+message CreateTodoRequest {
+  Todo todo = 1;
+}
+
+message TodoCriteria {
+  string id = 1;
+}
+
