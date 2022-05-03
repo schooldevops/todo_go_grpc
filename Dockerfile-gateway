@@ -1,0 +1,19 @@
+FROM golang:1.14-alpine as builder
+
+WORKDIR /src/
+RUN apk --update add --no-cache ca-certificates openssl git tzdata && \
+update-ca-certificates
+
+COPY . .
+
+RUN go mod download
+RUN CGO_ENABLED=0 go build server_gateway/gateway.go
+RUN cp gateway /bin/gateway
+
+FROM scratch
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /bin/gateway /bin/gateway
+
+WORKDIR /bin/
+# CMD ["reflex", "-c" "reflex.conf"]
+ENTRYPOINT ["/bin/gateway"]

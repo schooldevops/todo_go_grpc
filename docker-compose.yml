@@ -1,0 +1,23 @@
+version: '3.9'
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: ./Dockerfile-gateway
+    environment:
+      - PORT=9000
+    ports:
+      - "9000:9000"
+    command:
+      - /bin/gateway
+  grpc:
+    build:
+      context: .
+      dockerfile: ./Dockerfile-server
+    environment:
+      - PORT=9001
+    ports:
+      - "9001:9001"
+    command:
+      - /bin/todo_server
+    
